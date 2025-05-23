@@ -21,12 +21,10 @@ export default function Home() {
   // Función para ir al login limpiando cualquier sesión existente
   const handleOpenApp = async () => {
     try {
-      // Cerrar sesión si existe una activa
-      if (isAuthenticated) {
-        await signOut()
-      }
+      // Siempre intentar cerrar sesión, independientemente del estado
+      await signOut()
     } catch (error) {
-      console.log('No hay sesión activa que cerrar')
+      console.log('Error al cerrar sesión:', error)
     } finally {
       // Siempre ir al login
       router.push('/login')
