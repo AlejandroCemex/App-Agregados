@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,8 @@ import { LogIn, Eye, EyeOff } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { useAuth } from '@/hooks/use-auth'
 
-export default function LoginPage() {
+// Componente que maneja los search params
+function LoginFormWithParams() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -66,86 +67,112 @@ export default function LoginPage() {
   }
 
   return (
+    <div className="bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-lg max-w-md w-full">
+      <div className="text-center mb-8">
+        <div className="flex justify-center mb-6">
+          <Logo width={150} height={50} />
+        </div>
+        <h1 className="text-2xl font-bold text-[#0001B5] mb-2">Iniciar Sesión</h1>
+      </div>
+
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <form onSubmit={handleSignIn} className="space-y-4">
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@email.com"
+            required
+            disabled={loading}
+            className="mt-1"
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="password">Contraseña</Label>
+          <div className="relative mt-1">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              disabled={loading}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              disabled={loading}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4 text-gray-400" />
+              ) : (
+                <Eye className="h-4 w-4 text-gray-400" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <Button 
+          type="submit" 
+          className="w-full bg-[#0001B5] hover:bg-[#00018c] text-white"
+          disabled={loading}
+        >
+          {loading ? (
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Iniciando sesión...
+            </div>
+          ) : (
+            <div className="flex items-center">
+              <LogIn className="h-4 w-4 mr-2" />
+              Iniciar Sesión
+            </div>
+          )}
+        </Button>
+      </form>
+    </div>
+  )
+}
+
+// Componente de fallback para el Suspense
+function LoginFallback() {
+  return (
+    <div className="bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-lg max-w-md w-full">
+      <div className="text-center mb-8">
+        <div className="flex justify-center mb-6">
+          <Logo width={150} height={50} />
+        </div>
+        <h1 className="text-2xl font-bold text-[#0001B5] mb-2">Cargando...</h1>
+      </div>
+      <div className="flex justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0001B5]"></div>
+      </div>
+    </div>
+  )
+}
+
+// Componente principal exportado
+export default function LoginPage() {
+  return (
     <div
       className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4"
       style={{ backgroundImage: "url(/cantera-bg.jpg)" }}
     >
-      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-lg max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
-            <Logo width={150} height={50} />
-          </div>
-          <h1 className="text-2xl font-bold text-[#0001B5] mb-2">Iniciar Sesión</h1>
-        </div>
-
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <form onSubmit={handleSignIn} className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              required
-              disabled={loading}
-              className="mt-1"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="password">Contraseña</Label>
-            <div className="relative mt-1">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                disabled={loading}
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                disabled={loading}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-gray-400" />
-                ) : (
-                  <Eye className="h-4 w-4 text-gray-400" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <Button 
-            type="submit" 
-            className="w-full bg-[#0001B5] hover:bg-[#00018c] text-white"
-            disabled={loading}
-          >
-            {loading ? (
-              <div className="flex items-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Iniciando sesión...
-              </div>
-            ) : (
-              <div className="flex items-center">
-                <LogIn className="h-4 w-4 mr-2" />
-                Iniciar Sesión
-              </div>
-            )}
-          </Button>
-        </form>
-      </div>
+      <Suspense fallback={<LoginFallback />}>
+        <LoginFormWithParams />
+      </Suspense>
     </div>
   )
 }
