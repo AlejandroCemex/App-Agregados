@@ -30,6 +30,8 @@ export function useAuth() {
     // Listen for auth changes
     const { data: { subscription } } = client.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email)
+        
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           await getUser()
         } else if (event === 'SIGNED_OUT') {
@@ -46,9 +48,14 @@ export function useAuth() {
     try {
       setLoading(true)
       setError(null)
+      console.log('Fetching current user with role...')
+      
       const userWithRole = await authService.getCurrentUserWithRole(client)
+      console.log('User fetched:', userWithRole?.email, 'Role:', userWithRole?.role?.Roles?.nombre)
+      
       setUser(userWithRole)
     } catch (err: any) {
+      console.error('Error fetching user:', err)
       setError(err.message)
       setUser(null)
     } finally {
@@ -59,10 +66,15 @@ export function useAuth() {
   const signIn = async (email: string, password: string) => {
     try {
       setError(null)
+      console.log('useAuth: Starting sign in process')
+      
       const result = await authService.signIn(client, email, password)
+      console.log('useAuth: Sign in successful, refreshing user data')
+      
       await getUser() // Refresh user data
       return result
     } catch (err: any) {
+      console.error('useAuth: Sign in error:', err)
       setError(err.message)
       throw err
     }
@@ -71,16 +83,22 @@ export function useAuth() {
   const signOut = async () => {
     try {
       setError(null)
+      console.log('useAuth: Signing out')
+      
       await authService.signOut(client)
       setUser(null)
+      console.log('useAuth: Sign out successful')
     } catch (err: any) {
+      console.error('useAuth: Sign out error:', err)
       setError(err.message)
       throw err
     }
   }
 
   const hasRole = (roleName: string): boolean => {
-    return user?.role?.Roles?.nombre === roleName
+    const hasRoleResult = user?.role?.Roles?.nombre === roleName
+    console.log(`Checking role ${roleName}:`, hasRoleResult, 'User role:', user?.role?.Roles?.nombre)
+    return hasRoleResult
   }
 
   const getUserZone = () => {

@@ -24,18 +24,19 @@ export const authService = {
     if (!user) return null
 
     try {
-      // Get user data from the "Roles de Usuarios" table
+      // Using quoted table name to handle spaces
       const { data: userRole, error } = await client
-        .from('Roles de Usuarios')
+        .from('"Roles de Usuarios"')
         .select(`
           *,
-          Roles!id_rol(id, nombre),
-          Zonas!id_zona(id, nombre)
+          "Roles"!id_rol(id, nombre),
+          "Zonas"!id_zona(id, nombre)
         `)
         .eq('id', user.id)
         .single()
 
       if (error) {
+        console.warn('Error fetching user role:', error.message)
         // User might not have a role assigned yet
         return {
           ...user,
@@ -47,7 +48,8 @@ export const authService = {
         ...user,
         role: userRole
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.warn('Exception fetching user role:', error.message)
       // User might not have a role assigned yet
       return {
         ...user,
@@ -58,11 +60,19 @@ export const authService = {
 
   // Sign in with email and password
   async signIn(client: SupabaseClient, email: string, password: string) {
+    console.log('Attempting to sign in with email:', email)
+    
     const { data, error } = await client.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password
     })
-    if (error) throw error
+    
+    if (error) {
+      console.error('Sign in error:', error)
+      throw error
+    }
+    
+    console.log('Sign in successful')
     return data
   },
 

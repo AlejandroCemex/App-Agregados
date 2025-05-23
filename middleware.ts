@@ -35,8 +35,31 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // You can add custom logic here if needed
-  // For example, redirect unauthenticated users to login page
+  // Define protected and public routes
+  const protectedRoutes = ['/dashboard', '/admin', '/profile']
+  const authRoutes = ['/login', '/signup']
+  const isProtectedRoute = protectedRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  )
+  const isAuthRoute = authRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  )
+
+  // Redirect logic
+  if (!user && isProtectedRoute) {
+    // User is not authenticated and trying to access protected route
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = '/login'
+    redirectUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname)
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  if (user && isAuthRoute) {
+    // User is authenticated and trying to access auth route
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = '/dashboard'
+    return NextResponse.redirect(redirectUrl)
+  }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
   // creating a new response object with NextResponse.next() make sure to:

@@ -3,13 +3,26 @@
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from './database.types'
 
-export function createClient() {
-  // Create a supabase client on the browser with project's credentials
-  return createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+// Validar variables de entorno
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
+}
+if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
 }
 
-// Para compatibilidad con el código existente que usa supabaseClient
+let supabase: ReturnType<typeof createBrowserClient<Database>> | null = null
+
+export function createClient() {
+  // Create a singleton instance for browser use
+  if (!supabase) {
+    supabase = createBrowserClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  }
+  return supabase
+}
+
+// Para compatibilidad con el código existente
 export const supabaseClient = createClient()
