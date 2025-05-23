@@ -24,6 +24,9 @@ export const authService = {
     if (!user) return null
 
     try {
+      console.log('🔍 Fetching role for user ID:', user.id)
+      console.log('🔍 User email:', user.email)
+      
       // Using quoted table name to handle spaces
       const { data: userRole, error } = await client
         .from('"Roles de Usuarios"')
@@ -36,7 +39,7 @@ export const authService = {
         .single()
 
       if (error) {
-        console.warn('Error fetching user role:', error.message)
+        console.warn('❌ Error fetching user role:', error.message)
         // User might not have a role assigned yet
         return {
           ...user,
@@ -44,12 +47,17 @@ export const authService = {
         }
       }
 
+      console.log('✅ Raw user role data from DB:', userRole)
+      console.log('👤 User name from DB:', userRole?.nombre)
+      console.log('🎭 Role from DB:', userRole?.Roles?.nombre)
+      console.log('🗺️ Zone from DB:', userRole?.Zonas?.nombre)
+
       return {
         ...user,
         role: userRole
       }
     } catch (error: any) {
-      console.warn('Exception fetching user role:', error.message)
+      console.warn('❌ Exception fetching user role:', error.message)
       // User might not have a role assigned yet
       return {
         ...user,
