@@ -35,7 +35,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-cover bg-center" style={{ backgroundImage: "url(/cantera-bg.jpg)" }}>
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-lg">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0001B5] mx-auto mb-4"></div>
@@ -48,8 +48,7 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4"
-      style={{ backgroundImage: "url(/cantera-bg.jpg)" }}
+      className="min-h-screen flex flex-col items-center justify-center bg-white p-4"
     >
       <div className="bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-lg max-w-md w-full text-center">
         <div className="mb-8">

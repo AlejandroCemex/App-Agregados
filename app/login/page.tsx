@@ -167,8 +167,7 @@ function LoginFallback() {
 export default function LoginPage() {
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4"
-      style={{ backgroundImage: "url(/cantera-bg.jpg)" }}
+      className="min-h-screen flex flex-col items-center justify-center bg-white p-4"
     >
       <Suspense fallback={<LoginFallback />}>
         <LoginFormWithParams />
