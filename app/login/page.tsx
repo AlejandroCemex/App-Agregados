@@ -1,93 +1,147 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Logo } from "@/components/logo"
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { useUser } from "@/components/user-context"
-import { useToast } from "@/hooks/use-toast"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { LogIn, Eye, EyeOff } from "lucide-react"
+import { Logo } from "@/components/logo"
+import { useAuth } from '@/hooks/use-auth'
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
-  const { toast } = useToast()
-  const { login } = useUser()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const { user, isAuthenticated, signIn } = useAuth()
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, user, router])
+
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
+    setError('')
 
-    if (!username.trim()) {
-      toast({
-        title: "Error",
-        description: "Por favor ingresa tu nombre de usuario",
-        variant: "destructive",
-      })
+    if (!email || !password) {
+      setError('Por favor ingresa tu email y contraseña')
+      setLoading(false)
       return
     }
 
-    setIsLoading(true)
-
     try {
-      const result = await login(username)
-
-      if (result.success) {
-        toast({
-          title: "Inicio de sesión exitoso",
-          description: "Bienvenido al Cotizador de Agregados",
-        })
-        router.push("/dashboard")
-      } else {
-        toast({
-          title: "Error",
-          description: result.message,
-          variant: "destructive",
-        })
+      const result = await signIn(email, password)
+      
+      if (result.user) {
+        console.log('Usuario autenticado exitosamente')
+        // The useAuth hook will handle the redirect through useEffect
       }
-    } catch (error) {
-      console.error("Error durante el inicio de sesión:", error)
-      toast({
-        title: "Error",
-        description: "Ocurrió un error al iniciar sesión",
-        variant: "destructive",
-      })
+    } catch (error: any) {
+      console.error('Error de autenticación:', error)
+      
+      // Handle different error types
+      if (error.message.includes('Invalid login credentials')) {
+        setError('Email o contraseña incorrectos')
+      } else if (error.message.includes('Email not confirmed')) {
+        setError('Por favor confirma tu email antes de iniciar sesión')
+      } else {
+        setError('Error al iniciar sesión: ' + (error.message || 'Error desconocido'))
+      }
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 items-center text-center">
-          <Logo className="mb-4" width={180} height={60} />
-          <CardTitle className="text-2xl text-[#0001B5]">Iniciar Sesión</CardTitle>
-          <CardDescription>Ingresa tu nombre de usuario para acceder al cotizador</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Nombre de Usuario</Label>
+    <div
+      className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4"
+      style={{ backgroundImage: "url(/cantera-bg.jpg)" }}
+    >
+      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-lg max-w-md w-full">
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-6">
+            <Logo width={150} height={50} />
+          </div>
+          <h1 className="text-2xl font-bold text-[#0001B5] mb-2">Iniciar Sesión</h1>
+        </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={handleSignIn} className="space-y-4">
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              required
+              disabled={loading}
+              className="mt-1"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="password">Contraseña</Label>
+            <div className="relative mt-1">
               <Input
-                id="username"
-                placeholder="Ingresa tu nombre de usuario"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                disabled={isLoading}
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                disabled={loading}
+                className="pr-10"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                disabled={loading}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 text-gray-400" />
+                ) : (
+                  <Eye className="h-4 w-4 text-gray-400" />
+                )}
+              </button>
             </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full bg-[#0001B5] hover:bg-[#00018c]" disabled={isLoading}>
-              {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
-            </Button>
-          </CardFooter>
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full bg-[#0001B5] hover:bg-[#00018c] text-white"
+            disabled={loading}
+          >
+            {loading ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Iniciando sesión...
+              </div>
+            ) : (
+              <div className="flex items-center">
+                <LogIn className="h-4 w-4 mr-2" />
+                Iniciar Sesión
+              </div>
+            )}
+          </Button>
         </form>
-      </Card>
+      </div>
     </div>
   )
 }
