@@ -1,8 +1,51 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
+import { useAuth } from "@/hooks/use-auth"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function Home() {
+  const { isAuthenticated, loading, signOut } = useAuth()
+  const router = useRouter()
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, loading, router])
+
+  // Función para ir al login limpiando cualquier sesión existente
+  const handleOpenApp = async () => {
+    try {
+      // Cerrar sesión si existe una activa
+      if (isAuthenticated) {
+        await signOut()
+      }
+    } catch (error) {
+      console.log('No hay sesión activa que cerrar')
+    } finally {
+      // Siempre ir al login
+      router.push('/login')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cover bg-center" style={{ backgroundImage: "url(/cantera-bg.jpg)" }}>
+        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-lg">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0001B5] mx-auto mb-4"></div>
+            <p>Cargando...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4"
@@ -17,14 +60,13 @@ export default function Home() {
           <p className="text-lg text-gray-600">Sistema de gestión de agregados</p>
         </div>
 
-        <Link href="/login">
-          <Button 
-            className="w-full bg-[#0001B5] hover:bg-[#00018c] text-white text-lg py-3"
-            size="lg"
-          >
-            Abrir App
-          </Button>
-        </Link>
+        <Button 
+          onClick={handleOpenApp}
+          className="w-full bg-[#0001B5] hover:bg-[#00018c] text-white text-lg py-3"
+          size="lg"
+        >
+          Abrir App
+        </Button>
       </div>
     </div>
   )

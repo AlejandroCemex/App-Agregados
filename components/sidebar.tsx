@@ -25,7 +25,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     try {
       await signOut()
       closeSidebar()
-      router.push('/login')
+      router.push('/')
     } catch (error) {
       console.error('Error signing out:', error)
     }
@@ -40,6 +40,8 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   ]
 
   const userZone = getUserZone()
+  const userRole = user?.role?.Roles?.nombre
+  const userName = user?.role?.nombre || 'Usuario'
 
   return (
     <>
@@ -60,33 +62,61 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </div>
 
           {user && (
-            <div className="p-6 border-b">
+            <div className="p-6 border-b bg-gray-50">
+              {/* Información Principal del Usuario */}
               <div className="flex items-center space-x-3 mb-4">
-                <div className="bg-slate-100 p-2 rounded-full">
-                  <User className="h-5 w-5 text-[#0001B5]" />
+                <div className="bg-[#0001B5] p-3 rounded-full">
+                  <User className="h-6 w-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-sm">{user.role?.nombre || "Usuario"}</p>
+                  <p className="font-bold text-lg text-gray-800">{userName}</p>
+                  <p className="text-sm text-gray-500">Bienvenido al sistema</p>
                 </div>
               </div>
               
-              <div className="space-y-2">
-                {user.role?.Roles && (
-                  <div className="flex items-center space-x-2">
-                    <Shield className="h-3 w-3 text-[#0001B5]" />
-                    <Badge variant="secondary" className="text-xs">
-                      {user.role.Roles.nombre}
+              {/* Información de Rol y Zona */}
+              <div className="space-y-3">
+                {userRole && (
+                  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Shield className="h-5 w-5 text-[#0001B5]" />
+                      <span className="text-sm font-semibold text-gray-700">ROL</span>
+                    </div>
+                    <Badge variant="default" className="bg-[#0001B5] text-white text-sm px-3 py-1">
+                      {userRole}
                     </Badge>
                   </div>
                 )}
+                
                 {userZone && (
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="h-3 w-3 text-[#0001B5]" />
-                    <Badge variant="outline" className="text-xs">
+                  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <MapPin className="h-5 w-5 text-[#FB2230]" />
+                      <span className="text-sm font-semibold text-gray-700">ZONA DE TRABAJO</span>
+                    </div>
+                    <Badge variant="outline" className="border-[#FB2230] text-[#FB2230] text-sm px-3 py-1 bg-red-50">
                       {userZone.nombre}
                     </Badge>
                   </div>
                 )}
+
+                {/* Si no hay rol o zona, mostrar mensaje informativo */}
+                {!userRole && !userZone && (
+                  <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                    <div className="flex items-center space-x-2">
+                      <User className="h-5 w-5 text-amber-600" />
+                      <span className="text-sm text-amber-700">
+                        Perfil en configuración
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Estado de conexión */}
+              <div className="mt-4 flex items-center justify-center space-x-2 bg-green-50 p-2 rounded-lg">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-green-700 font-medium">Sesión Activa</span>
               </div>
             </div>
           )}

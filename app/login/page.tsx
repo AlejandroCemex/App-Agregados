@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,16 +16,20 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectedFrom = searchParams.get('redirectedFrom')
 
   const { user, isAuthenticated, signIn } = useAuth()
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      router.push('/dashboard')
+      const targetPath = redirectedFrom || '/dashboard'
+      router.push(targetPath)
     }
-  }, [isAuthenticated, user, router])
+  }, [isAuthenticated, user, router, redirectedFrom])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
