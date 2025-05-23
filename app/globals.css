@@ -1,0 +1,221 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 240 100% 35.7%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 240 100% 35.7%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 240 100% 35.7%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 240 100% 35.7%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Mejoras para dispositivos móviles */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea,
+  button {
+    font-size: 16px !important; /* Evita zoom automático en iOS */
+  }
+
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Ajustes para formularios en móviles */
+  .form-row {
+    flex-direction: column;
+  }
+
+  /* Mejora la visualización de diálogos en móviles */
+  .dialog-content {
+    width: 95vw !important;
+    max-width: 95vw !important;
+  }
+}
+
+/* Mejoras generales de accesibilidad */
+:focus {
+  outline: 2px solid #0001b5;
+  outline-offset: 2px;
+}
+
+/* Mejora el contraste para elementos interactivos */
+button:active,
+a:active {
+  transform: scale(0.98);
+}
+
+/* Mejora el scroll en dispositivos táctiles */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mejoras adicionales para dispositivos móviles */
+@media (max-width: 640px) {
+  /* Evitar que los botones se amontonen */
+  .button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  /* Mejorar la visualización de los botones en móviles */
+  button,
+  a[role="button"] {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Asegurar que los textos no se desborden */
+  .text-overflow-ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Mejorar la visualización de PDF en móviles */
+  .pdf-preview {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Ajustar el tamaño de los íconos en móviles */
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+/* Mejoras específicas para la visualización del PDF en móviles */
+@media (max-width: 767px) {
+  /* Ajustes para la ventana de PDF en móviles */
+  .pdf-window {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+  }
+
+  /* Asegurar que el contenido del PDF se vea correctamente */
+  .pdf-content {
+    padding: 10px;
+  }
+
+  /* Ajustar el tamaño de las tablas en móviles */
+  .pdf-content table {
+    font-size: 12px;
+  }
+
+  /* Mejorar la visualización de botones en la ventana de PDF */
+  .pdf-buttons {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+/* Estilos para fondos y tarjetas con aspecto formal */
+.card,
+.dialog-content,
+.popover-content {
+  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Mejora para el contraste de texto */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: #333;
+}
+
+/* Mejora para los botones */
+button,
+a[role="button"] {
+  transition: all 0.2s ease;
+}
+
+button:hover,
+a[role="button"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Mejora para los inputs */
+input,
+select,
+textarea {
+  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  background-color: white;
+  border-color: rgba(0, 1, 181, 0.3);
+  box-shadow: 0 0 0 2px rgba(0, 1, 181, 0.1);
+}
+
+/* Gradiente radial personalizado */
+.bg-radial-gradient-to-center {
+  background-image: radial-gradient(circle at center, var(--tw-gradient-from) 0%, var(--tw-gradient-to) 100%);
+}
