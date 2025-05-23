@@ -2,16 +2,13 @@
 
 import { useRouter } from "next/navigation"
 import { PageTitle } from "@/components/page-title"
-import { FileText, Home, DollarSign, Truck, LogOut, User, Shield, MapPin } from "lucide-react"
+import { FileText, Home, DollarSign, Truck } from "lucide-react"
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/hooks/use-auth"
 
 export default function Dashboard() {
   const router = useRouter()
-  const { user, isAuthenticated, loading, signOut, hasRole, getUserZone } = useAuth()
+  const { user, isAuthenticated, loading } = useAuth()
   const [activeStep, setActiveStep] = useState<number | null>(null)
 
   // Redirect to login if not authenticated
@@ -20,15 +17,6 @@ export default function Dashboard() {
       router.push('/login')
     }
   }, [isAuthenticated, loading, router])
-
-  const handleSignOut = async () => {
-    try {
-      await signOut()
-      router.push('/login')
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
-  }
 
   const menuItems = [
     {
@@ -69,63 +57,8 @@ export default function Dashboard() {
     return null // Will redirect to login
   }
 
-  const userZone = getUserZone()
-
   return (
     <div className="space-y-8">
-      {/* User info section */}
-      <Card className="bg-gradient-to-r from-[#0001B5] to-[#0001B5]/80 text-white">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                <User className="h-6 w-6" />
-              </div>
-              <div>
-                <CardTitle className="text-white">
-                  Bienvenido, {user.role?.nombre || user.email}
-                </CardTitle>
-                <CardDescription className="text-white/80">
-                  Sesión iniciada correctamente
-                </CardDescription>
-              </div>
-            </div>
-            <Button 
-              variant="outline" 
-              onClick={handleSignOut}
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Cerrar Sesión
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span className="text-sm">Email: {user.email}</span>
-            </div>
-            {user.role?.Roles && (
-              <div className="flex items-center space-x-2">
-                <Shield className="h-4 w-4" />
-                <Badge variant="secondary" className="bg-white/20 text-white">
-                  {user.role.Roles.nombre}
-                </Badge>
-              </div>
-            )}
-            {userZone && (
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4" />
-                <Badge variant="outline" className="border-white/20 text-white">
-                  {userZone.nombre}
-                </Badge>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       <PageTitle
         title="Menú Principal"
         subtitle="En esta plataforma tendrá la posibilidad de generar las altas de precios y las cotizaciones del sector de agregados"

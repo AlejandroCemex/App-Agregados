@@ -1,12 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/logo"
-import { useSafeUser } from "@/components/user-context"
-import { X, Home, FileText, LogOut, User, MapPin, DollarSign, Truck } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth"
+import { X, Home, FileText, LogOut, User, MapPin, DollarSign, Truck, Shield } from "lucide-react"
 
 interface SidebarProps {
   isOpen: boolean
@@ -15,17 +16,19 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname()
-
-  // Use the safe version of useUser that doesn't throw errors
-  const { user, logout } = useSafeUser()
+  const router = useRouter()
+  const { user, signOut, getUserZone } = useAuth()
 
   const closeSidebar = () => setIsOpen(false)
 
-  const handleLogout = () => {
-    logout()
-    closeSidebar()
-    // Añadir redirección a la página de inicio
-    window.location.href = "/"
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      closeSidebar()
+      router.push('/login')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
   }
 
   // Cambiar el orden de los elementos del menú y eliminar "Historial de Altas de Precio"
@@ -35,6 +38,8 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { href: "/generar-cotizacion", label: "Generar Cotización", icon: FileText },
     { href: "/nueva-cotizacion", label: "Alta de Precio", icon: DollarSign },
   ]
+
+  const userZone = getUserZone()
 
   return (
     <>
@@ -56,17 +61,32 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
           {user && (
             <div className="p-6 border-b">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 mb-4">
                 <div className="bg-slate-100 p-2 rounded-full">
                   <User className="h-5 w-5 text-[#0001B5]" />
                 </div>
-                <div>
-                  <p className="font-medium">{user.nombre || "Usuario"}</p>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    <span>Zona: {user.zona?.nombre || "No especificada"}</span>
-                  </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{user.role?.nombre || "Usuario"}</p>
                 </div>
+              </div>
+              
+              <div className="space-y-2">
+                {user.role?.Roles && (
+                  <div className="flex items-center space-x-2">
+                    <Shield className="h-3 w-3 text-[#0001B5]" />
+                    <Badge variant="secondary" className="text-xs">
+                      {user.role.Roles.nombre}
+                    </Badge>
+                  </div>
+                )}
+                {userZone && (
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="h-3 w-3 text-[#0001B5]" />
+                    <Badge variant="outline" className="text-xs">
+                      {userZone.nombre}
+                    </Badge>
+                  </div>
+                )}
               </div>
             </div>
           )}
