@@ -1,9 +1,38 @@
 // Creamos un cliente simulado para el entorno de desarrollo/preview
 // que proporciona la misma interfaz pero no depende de la biblioteca externa
 
-class SupabaseServerMock {
-  // Implementación similar al cliente, pero para uso en el servidor
-  // Por ahora, es un objeto vacío ya que no se usa en la vista principal
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import type { Database } from './database.types'
+
+export async function createClient() {
+  const cookieStore = await cookies()
+
+  // Create a server's supabase client with newly configured cookie,
+  // which could be used to maintain user's session
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    }
+  )
 }
 
-export const supabaseServer = new SupabaseServerMock()
+// Para compatibilidad con el código existente que usa supabaseServer
+export const supabaseServer = createClient()

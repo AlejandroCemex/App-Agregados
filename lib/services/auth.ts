@@ -1,12 +1,12 @@
-import { createClient as createBrowserClient } from '@/lib/supabase-browser'
-import { createClient as createServerClient } from '@/lib/supabase-server'
+import { createClient } from '@/lib/supabase/client'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 
 // Type for the client (works in both browser and server)
-type SupabaseClient = ReturnType<typeof createBrowserClient> | ReturnType<typeof createServerClient>
+type SupabaseClient = ReturnType<typeof createClient> | Awaited<ReturnType<typeof createServerClient>>
 
 // Helper function to get client for browser components
 export function getBrowserClient() {
-  return createBrowserClient()
+  return createClient()
 }
 
 // Auth service - simplified for login only

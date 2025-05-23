@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useUser } from "@/components/user-context"
 import { useToast } from "@/hooks/use-toast"
-import { supabaseClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -108,6 +108,8 @@ export default function GenerarCotizacion() {
   const { user } = useUser()
   const { toast } = useToast()
   const printRef = useRef<HTMLDivElement>(null)
+
+  const supabase = createClient()
 
   // Estados para los datos de Supabase
   const [canteras, setCanteras] = useState<Cantera[]>([])
@@ -367,7 +369,7 @@ export default function GenerarCotizacion() {
       setIsLoading(true)
       try {
         // Fetch canteras based on user's zone
-        const { data: canterasData, error: canterasError } = await supabaseClient
+        const { data: canterasData, error: canterasError } = await supabase
           .from("01 Canteras Propias")
           .select("id, Nombre")
           .eq("Zona", user.zona.id)
@@ -378,7 +380,7 @@ export default function GenerarCotizacion() {
         // Precargar materiales para cada cantera
         const materialesMap: Record<number, Material[]> = {}
         for (const cantera of canterasData || []) {
-          const { data: materialesData } = await supabaseClient
+          const { data: materialesData } = await supabase
             .from("01 Materiales Canteras")
             .select('id, Material, "No. Material"')
             .eq("Cantera", cantera.id)
@@ -399,7 +401,7 @@ export default function GenerarCotizacion() {
     }
 
     fetchCanteras()
-  }, [user, toast])
+  }, [user, toast, supabase])
 
   // Añadir esta función junto con las otras funciones de manejo
   const toggleMaterialExpansion = (materialId: string) => {

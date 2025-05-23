@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useUser } from "@/components/user-context"
 import { useToast } from "@/hooks/use-toast"
-import { supabaseClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -129,6 +129,8 @@ export default function CoteraPropia() {
   const { user } = useUser()
   const router = useRouter()
   const { toast } = useToast()
+
+  const supabase = createClient()
 
   // Estado para el diálogo de vincular cotización
   const [vincularCotizacionOpen, setVincularCotizacionOpen] = useState(false)
@@ -296,7 +298,7 @@ export default function CoteraPropia() {
         if (!user) return
 
         // Fetch canteras based on user's zone
-        const { data: canterasData, error: canterasError } = await supabaseClient
+        const { data: canterasData, error: canterasError } = await supabase
           .from("01 Canteras Propias")
           .select("id, Nombre")
           .eq("Zona", user.zona.id)
@@ -305,13 +307,13 @@ export default function CoteraPropia() {
         setCanteras(canterasData || [])
 
         // Fetch other data
-        const { data: calidadData } = await supabaseClient.from("Calidad Material").select("*")
+        const { data: calidadData } = await supabase.from("Calidad Material").select("*")
         setCalidadMaterial(calidadData || [])
 
-        const { data: volumenData } = await supabaseClient.from("Volumen Recurrente").select("*")
+        const { data: volumenData } = await supabase.from("Volumen Recurrente").select("*")
         setVolumenRecurrente(volumenData || [])
 
-        const { data: segmentosData } = await supabaseClient.from("Segmentos").select("*")
+        const { data: segmentosData } = await supabase.from("Segmentos").select("*")
         setSegmentos(segmentosData || [])
       } catch (error) {
         console.error("Error fetching data:", error)
@@ -330,7 +332,7 @@ export default function CoteraPropia() {
 
   const fetchMateriales = async (canteraId: number) => {
     try {
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from("01 Materiales Canteras")
         .select('id, Material, "No. Material"')
         .eq("Cantera", canteraId)
@@ -502,7 +504,7 @@ export default function CoteraPropia() {
 
     try {
       // Insert cotización
-      const { data: cotizacionData, error: cotizacionError } = await supabaseClient
+      const { data: cotizacionData, error: cotizacionError } = await supabase
         .from("Cotizaciones")
         .insert({
           fecha_inicio: fechaInicio.toISOString(),
@@ -521,7 +523,7 @@ export default function CoteraPropia() {
 
       // Insert detalles de cotización
       const detallesPromises = productos.map((producto) => {
-        return supabaseClient.from("Detalles Cotizacion").insert({
+        return supabase.from("Detalles Cotizacion").insert({
           cotizacion_id: cotizacionId,
           cantera_id: producto.cantera_id,
           material_id: producto.material_id,

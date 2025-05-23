@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useUser } from "@/components/user-context"
 import { useToast } from "@/hooks/use-toast"
-import { supabaseClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -68,6 +68,7 @@ export default function CotizacionDetalle() {
   const [detalles, setDetalles] = useState<DetalleCotizacion[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  const supabase = createClient()
   const cotizacionId = params.id as string
 
   useEffect(() => {
@@ -78,7 +79,7 @@ export default function CotizacionDetalle() {
         setIsLoading(true)
 
         // Get cotizacion
-        const { data: cotizacionData, error: cotizacionError } = await supabaseClient
+        const { data: cotizacionData, error: cotizacionError } = await supabase
           .from("Cotizaciones")
           .select(`
             id,
@@ -98,7 +99,7 @@ export default function CotizacionDetalle() {
         setCotizacion(cotizacionData)
 
         // Get detalles
-        const { data: detallesData, error: detallesError } = await supabaseClient
+        const { data: detallesData, error: detallesError } = await supabase
           .from("Detalles Cotizacion")
           .select(`
             id,
@@ -116,7 +117,6 @@ export default function CotizacionDetalle() {
             segmento:Segmentos (id, nombre)
           `)
           .eq("cotizacion_id", cotizacionId)
-          .execute()
 
         if (detallesError) throw detallesError
         setDetalles(detallesData || [])
@@ -139,11 +139,10 @@ export default function CotizacionDetalle() {
     if (!cotizacion) return
 
     try {
-      const { error } = await supabaseClient
+      const { error } = await supabase
         .from("Cotizaciones")
         .update({ estado: "Enviado a aprobación" })
         .eq("id", cotizacion.id)
-        .execute()
 
       if (error) throw error
 
