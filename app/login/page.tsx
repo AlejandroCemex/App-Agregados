@@ -48,7 +48,7 @@ function LoginFormWithParams() {
       
       if (result.user) {
         console.log('Usuario autenticado exitosamente')
-        // The useAuth hook will handle the redirect through useEffect
+        // The middleware will handle the redirect
       }
     } catch (error: any) {
       console.error('Error de autenticación:', error)

@@ -3,20 +3,13 @@
 import { useRouter } from "next/navigation"
 import { PageTitle } from "@/components/page-title"
 import { FileText, Home, DollarSign, Truck } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
 
 export default function Dashboard() {
   const router = useRouter()
   const { user, isAuthenticated, loading } = useAuth()
   const [activeStep, setActiveStep] = useState<number | null>(null)
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/login')
-    }
-  }, [isAuthenticated, loading, router])
 
   const menuItems = [
     {
@@ -42,6 +35,7 @@ export default function Dashboard() {
     },
   ]
 
+  // Show loading state while auth is being determined
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -53,8 +47,16 @@ export default function Dashboard() {
     )
   }
 
-  if (!isAuthenticated || !user) {
-    return null // Will redirect to login
+  // If not authenticated, middleware should handle redirect, but show loading as fallback
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0001B5] mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Redirigiendo...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
