@@ -6,76 +6,87 @@ export async function middleware(request: NextRequest) {
     request,
   })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
+  try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+            supabaseResponse = NextResponse.next({
+              request,
+            })
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
+            )
+          },
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
+      }
+    )
+
+    const {
+      data: { user },
+      error
+    } = await supabase.auth.getUser()
+
+    // If there's an error getting the user, treat as unauthenticated
+    const isAuthenticated = !error && !!user
+
+    // Define protected and public routes
+    const protectedRoutes = [
+      '/dashboard', 
+      '/admin', 
+      '/profile',
+      '/nueva-cotizacion',
+      '/cotizacion-flete',
+      '/historial',
+      '/reportes',
+      '/generar-cotizacion'
+    ]
+    const authRoutes = ['/login', '/signup']
+    
+    const pathname = request.nextUrl.pathname
+    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+    const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
+
+    // Redirect logic
+    if (!isAuthenticated && isProtectedRoute) {
+      // User is not authenticated and trying to access protected route
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/login'
+      redirectUrl.searchParams.set('redirectedFrom', pathname)
+      return NextResponse.redirect(redirectUrl)
     }
-  )
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
+    if (isAuthenticated && isAuthRoute) {
+      // User is authenticated and trying to access auth route
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/dashboard'
+      redirectUrl.search = '' // Clear any search params
+      return NextResponse.redirect(redirectUrl)
+    }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    // For root path, redirect authenticated users to dashboard
+    if (isAuthenticated && pathname === '/') {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl)
+    }
 
-  // Define protected and public routes
-  const protectedRoutes = [
-    '/dashboard', 
-    '/admin', 
-    '/profile',
-    '/nueva-cotizacion',
-    '/cotizacion-flete',
-    '/historial',
-    '/reportes'
-  ]
-  const authRoutes = ['/login', '/signup']
-  const isProtectedRoute = protectedRoutes.some(route => 
-    request.nextUrl.pathname.startsWith(route)
-  )
-  const isAuthRoute = authRoutes.some(route => 
-    request.nextUrl.pathname.startsWith(route)
-  )
+    // For root path, redirect unauthenticated users to login
+    if (!isAuthenticated && pathname === '/') {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/login'
+      return NextResponse.redirect(redirectUrl)
+    }
 
-  // Redirect logic
-  if (!user && isProtectedRoute) {
-    // User is not authenticated and trying to access protected route
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/login'
-    redirectUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname)
-    return NextResponse.redirect(redirectUrl)
+  } catch (error) {
+    // On error, allow the request to proceed
   }
-
-  if (user && isAuthRoute) {
-    // User is authenticated and trying to access auth route
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/dashboard'
-    return NextResponse.redirect(redirectUrl)
-  }
-
-  // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
-  // creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object instead of the supabaseResponse object
 
   return supabaseResponse
 }

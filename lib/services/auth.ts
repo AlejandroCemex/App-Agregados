@@ -4,63 +4,83 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 // Type for the client (works in both browser and server)
 type SupabaseClient = ReturnType<typeof createClient> | Awaited<ReturnType<typeof createServerClient>>
 
+export type UserRole = {
+  id: string
+  email: string
+  nombre: string | null
+  id_rol: number | null
+  id_zona: number | null
+  Roles?: { id: number; nombre: string } | null
+  Zonas?: { id: number; nombre: string } | null
+}
+
+// Create a single browser client instance to avoid creating multiple clients
+let browserClient: ReturnType<typeof createClient> | null = null
+
 // Helper function to get client for browser components
 export function getBrowserClient() {
-  return createClient()
+  if (!browserClient) {
+    browserClient = createClient()
+  }
+  return browserClient
 }
 
 // Auth service - simplified for login only
 export const authService = {
   // Check if user is authenticated
   async getCurrentUser(client: SupabaseClient) {
-    const { data: { user }, error } = await client.auth.getUser()
-    if (error) throw error
-    return user
+    try {
+      const { data: { user }, error } = await client.auth.getUser()
+      if (error) throw error
+      return user
+    } catch (error: any) {
+      throw error
+    }
   },
 
   // Get current user with role information from the database
   async getCurrentUserWithRole(client: SupabaseClient) {
     const user = await this.getCurrentUser(client)
-    if (!user) return null
+    if (!user) {
+      return null
+    }
 
     try {
-      console.log('🔍 Fetching role for user ID:', user.id)
-      console.log('🔍 User email:', user.email)
-      
       // Using quoted table name to handle spaces
       const { data: userRole, error } = await client
-        .from('"Roles de Usuarios"')
+        .from('Roles de Usuarios')
         .select(`
           *,
-          "Roles"!id_rol(id, nombre),
-          "Zonas"!id_zona(id, nombre)
+          Roles!id_rol(id, nombre),
+          Zonas!id_zona(id, nombre)
         `)
         .eq('id', user.id)
         .single()
 
       if (error) {
-        console.warn('❌ Error fetching user role:', error.message)
-        // User might not have a role assigned yet
+        // If user doesn't have a role assigned, that's okay - they might be a new user
+        if (error.code === 'PGRST116') {
+          return {
+            user,
+            role: null
+          }
+        }
+        
+        // Don't throw here - return user without role instead
         return {
-          ...user,
+          user,
           role: null
         }
       }
 
-      console.log('✅ Raw user role data from DB:', userRole)
-      console.log('👤 User name from DB:', userRole?.nombre)
-      console.log('🎭 Role from DB:', userRole?.Roles?.nombre)
-      console.log('🗺️ Zone from DB:', userRole?.Zonas?.nombre)
-
       return {
-        ...user,
-        role: userRole
+        user,
+        role: userRole as UserRole
       }
     } catch (error: any) {
-      console.warn('❌ Exception fetching user role:', error.message)
-      // User might not have a role assigned yet
+      // Don't throw here - return user without role instead
       return {
-        ...user,
+        user,
         role: null
       }
     }
@@ -68,38 +88,41 @@ export const authService = {
 
   // Sign in with email and password
   async signIn(client: SupabaseClient, email: string, password: string) {
-    console.log('Attempting to sign in with email:', email)
-    
-    const { data, error } = await client.auth.signInWithPassword({
-      email: email.trim(),
-      password
-    })
-    
-    if (error) {
-      console.error('Sign in error:', error)
+    try {
+      const { data, error } = await client.auth.signInWithPassword({
+        email: email.trim(),
+        password
+      })
+      
+      if (error) {
+        throw error
+      }
+      
+      return data
+    } catch (error: any) {
       throw error
     }
-    
-    console.log('Sign in successful')
-    return data
   },
 
   // Sign out
   async signOut(client: SupabaseClient) {
-    const { error } = await client.auth.signOut()
-    if (error) throw error
+    try {
+      const { error } = await client.auth.signOut()
+      if (error) throw error
+    } catch (error: any) {
+      throw error
+    }
   },
 
   // Check if user has specific role
   async userHasRole(client: SupabaseClient, roleName: string) {
-    const userWithRole = await this.getCurrentUserWithRole(client)
-    if (!userWithRole?.role?.Roles) return false
-    return userWithRole.role.Roles.nombre === roleName
+    const response = await this.getCurrentUserWithRole(client)
+    return response?.role?.Roles?.nombre === roleName
   },
 
   // Get user's zone
   async getUserZone(client: SupabaseClient) {
-    const userWithRole = await this.getCurrentUserWithRole(client)
-    return userWithRole?.role?.Zonas || null
+    const response = await this.getCurrentUserWithRole(client)
+    return response?.role?.Zonas || null
   }
 } 

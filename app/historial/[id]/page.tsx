@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
+import { useParams } from "@/lib/use-safe-params"
 import { useUser } from "@/components/user-context"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/lib/supabase/client"
@@ -60,7 +61,7 @@ type DetalleCotizacion = {
 }
 
 export default function CotizacionDetalle() {
-  const params = useParams()
+  const params = useParams<{ id: string }>()
   const router = useRouter()
   const { user } = useUser()
   const { toast } = useToast()
@@ -69,7 +70,7 @@ export default function CotizacionDetalle() {
   const [isLoading, setIsLoading] = useState(true)
 
   const supabase = createClient()
-  const cotizacionId = params.id as string
+  const cotizacionId = params.id
 
   useEffect(() => {
     const fetchCotizacion = async () => {

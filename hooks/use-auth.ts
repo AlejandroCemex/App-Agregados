@@ -1,121 +1,218 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { authService, getBrowserClient } from '@/lib/services/auth'
+import { useState, useEffect, useRef } from 'react'
+import { authService, type UserRole } from '@/lib/services/auth'
 import type { User } from '@supabase/supabase-js'
 
-interface UserWithRole extends User {
-  role?: {
-    id: string
-    email: string
-    nombre: string | null
-    id_rol: number | null
-    id_zona: number | null
-    Roles?: { id: number; nombre: string } | null
-    Zonas?: { id: number; nombre: string } | null
-  } | null
+// Define our application user type
+type AppUser = {
+  user: User | null
+  role: UserRole | null
 }
 
 export function useAuth() {
-  const [user, setUser] = useState<UserWithRole | null>(null)
+  const [userData, setUserData] = useState<AppUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+  const initialized = useRef(false)
 
-  const client = getBrowserClient()
-
+  // Handle client-side mounting first
   useEffect(() => {
-    // Get initial session
-    getUser()
+    setMounted(true)
+  }, [])
 
-    // Listen for auth changes
-    const { data: { subscription } } = client.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email)
+  // Main auth effect - only runs after mounting
+  useEffect(() => {
+    if (!mounted) {
+      return
+    }
+    
+    if (initialized.current) {
+      return
+    }
+    
+    initialized.current = true
+    
+    let isCancelled = false
+
+    // Dynamic import to avoid SSR issues
+    const initializeAuth = async () => {
+      try {
+        // Import browser client only on client side
+        const { getBrowserClient } = await import('@/lib/services/auth')
+        const client = getBrowserClient()
         
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          await getUser()
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null)
+        const { data: { session } } = await client.auth.getSession()
+        
+        if (isCancelled) {
+          return
+        }
+        
+        if (session?.user) {
+          await getUserWithRole(client)
+        } else {
+          setUserData(null)
+          setLoading(false)
+        }
+      } catch (err: any) {
+        if (!isCancelled) {
+          setError(err.message)
+          setUserData(null)
           setLoading(false)
         }
       }
-    )
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const getUser = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      console.log('Fetching current user with role...')
-      
-      const userWithRole = await authService.getCurrentUserWithRole(client)
-      console.log('User fetched:', userWithRole?.email, 'Role:', userWithRole?.role?.Roles?.nombre)
-      
-      setUser(userWithRole)
-    } catch (err: any) {
-      console.error('Error fetching user:', err)
-      setError(err.message)
-      setUser(null)
-    } finally {
-      setLoading(false)
     }
-  }
+
+    const setupAuthListener = async () => {
+      try {
+        const { getBrowserClient } = await import('@/lib/services/auth')
+        const client = getBrowserClient()
+
+        // Set up auth state listener
+        const { data: { subscription } } = client.auth.onAuthStateChange(
+          async (event, session) => {
+            if (isCancelled) {
+              return
+            }
+            
+            if (event === 'SIGNED_IN' && session?.user) {
+              await getUserWithRole(client)
+            } else if (event === 'SIGNED_OUT') {
+              setUserData(null)
+              setLoading(false)
+            } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+              // Only refresh user data if we don't have it or user changed
+              if (!userData?.user || userData.user.id !== session.user.id) {
+                await getUserWithRole(client)
+              }
+            }
+          }
+        )
+
+        return subscription
+      } catch (err) {
+        return null
+      }
+    }
+
+    const getUserWithRole = async (client: any) => {
+      if (isCancelled) {
+        return
+      }
+      
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const result = await authService.getCurrentUserWithRole(client)
+        
+        if (!isCancelled) {
+          setUserData(result ? { user: result.user, role: result.role } : null)
+          setLoading(false)
+        }
+      } catch (err: any) {
+        if (!isCancelled) {
+          setError(err.message)
+          setUserData(null)
+          setLoading(false)
+        }
+      }
+    }
+
+    let subscription: any = null
+    
+    Promise.all([
+      initializeAuth(),
+      setupAuthListener()
+    ]).then(([, sub]) => {
+      subscription = sub
+    }).catch(() => {
+      // Error handled in individual functions
+    })
+
+    return () => {
+      isCancelled = true
+      if (subscription) {
+        subscription.unsubscribe()
+      }
+    }
+  }, [mounted]) // Depend on mounted state
 
   const signIn = async (email: string, password: string) => {
+    if (!mounted) {
+      throw new Error('Auth not initialized')
+    }
+    
     try {
       setError(null)
-      console.log('useAuth: Starting sign in process')
       
+      const { getBrowserClient } = await import('@/lib/services/auth')
+      const client = getBrowserClient()
       const result = await authService.signIn(client, email, password)
-      console.log('useAuth: Sign in successful, refreshing user data')
       
-      await getUser() // Refresh user data
       return result
     } catch (err: any) {
-      console.error('useAuth: Sign in error:', err)
       setError(err.message)
       throw err
     }
   }
 
   const signOut = async () => {
+    if (!mounted) {
+      throw new Error('Auth not initialized')
+    }
+    
     try {
       setError(null)
-      console.log('useAuth: Signing out')
-      
+      const { getBrowserClient } = await import('@/lib/services/auth')
+      const client = getBrowserClient()
       await authService.signOut(client)
-      setUser(null)
-      console.log('useAuth: Sign out successful')
+      setUserData(null)
     } catch (err: any) {
-      console.error('useAuth: Sign out error:', err)
       setError(err.message)
       throw err
     }
   }
 
+  const isAuthenticated = !!userData?.user
+  const user = userData?.user || null
+  const role = userData?.role || null
+
   const hasRole = (roleName: string): boolean => {
-    const hasRoleResult = user?.role?.Roles?.nombre === roleName
-    console.log(`Checking role ${roleName}:`, hasRoleResult, 'User role:', user?.role?.Roles?.nombre)
-    return hasRoleResult
+    return role?.Roles?.nombre === roleName
   }
 
   const getUserZone = () => {
-    return user?.role?.Zonas || null
+    return role?.Zonas || null
   }
 
-  const isAuthenticated = !!user
+  const refresh = async () => {
+    if (!mounted) return
+    
+    try {
+      setError(null)
+      const { getBrowserClient } = await import('@/lib/services/auth')
+      const client = getBrowserClient()
+      
+      const result = await authService.getCurrentUserWithRole(client)
+      setUserData(result ? { user: result.user, role: result.role } : null)
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
 
   return {
     user,
+    role,
     loading,
     error,
+    isAuthenticated,
     signIn,
     signOut,
     hasRole,
     getUserZone,
-    isAuthenticated,
-    refresh: getUser
+    refresh,
+    mounted
   }
 } 

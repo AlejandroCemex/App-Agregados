@@ -27,7 +27,7 @@ async function validateUserData() {
     // 1. Verificar conexión básica probando con tabla Roles
     console.log('\n2️⃣ Probando conexión con Supabase...')
     const { data: testRoles, error: testRolesError } = await supabase
-      .from('"Roles"')
+      .from('Roles')
       .select('count')
       .limit(1)
 
@@ -47,7 +47,7 @@ async function validateUserData() {
     // Verificar tabla "Roles de Usuarios"
     try {
       const { data: rolesUsuarios, error: rolesUsuariosError } = await supabase
-        .from('"Roles de Usuarios"')
+        .from('Roles de Usuarios')
         .select('*')
         .limit(1)
 
@@ -66,7 +66,7 @@ async function validateUserData() {
     // Verificar tabla "Roles"
     try {
       const { data: roles, error: rolesError } = await supabase
-        .from('"Roles"')
+        .from('Roles')
         .select('*')
         .limit(1)
 
@@ -85,7 +85,7 @@ async function validateUserData() {
     // Verificar tabla "Zonas"
     try {
       const { data: zonas, error: zonasError } = await supabase
-        .from('"Zonas"')
+        .from('Zonas')
         .select('*')
         .limit(1)
 
@@ -107,7 +107,7 @@ async function validateUserData() {
     // Datos de Roles
     if (tablesResults.roles?.exists) {
       const { data: allRoles, error: allRolesError } = await supabase
-        .from('"Roles"')
+        .from('Roles')
         .select('*')
 
       if (!allRolesError && allRoles) {
@@ -123,7 +123,7 @@ async function validateUserData() {
     // Datos de Zonas
     if (tablesResults.zonas?.exists) {
       const { data: allZonas, error: allZonasError } = await supabase
-        .from('"Zonas"')
+        .from('Zonas')
         .select('*')
 
       if (!allZonasError && allZonas) {
@@ -139,7 +139,7 @@ async function validateUserData() {
     // Datos de Roles de Usuarios
     if (tablesResults.rolesUsuarios?.exists) {
       const { data: allRolesUsuarios, error: allRolesUsuariosError } = await supabase
-        .from('"Roles de Usuarios"')
+        .from('Roles de Usuarios')
         .select('*')
 
       if (!allRolesUsuariosError && allRolesUsuarios) {
@@ -165,11 +165,11 @@ async function validateUserData() {
       console.log('\n5️⃣ Probando consulta completa con relaciones...')
       
       const { data: fullUserData, error: fullUserError } = await supabase
-        .from('"Roles de Usuarios"')
+        .from('Roles de Usuarios')
         .select(`
           *,
-          "Roles"!id_rol(id, nombre),
-          "Zonas"!id_zona(id, nombre)
+          Roles!id_rol(id, nombre),
+          Zonas!id_zona(id, nombre)
         `)
 
       if (!fullUserError && fullUserData) {

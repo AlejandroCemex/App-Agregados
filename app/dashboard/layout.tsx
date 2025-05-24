@@ -1,29 +1,22 @@
 "use client"
 
 import type React from "react"
-import { Sidebar } from "@/components/sidebar"
-import { UserProvider } from "@/components/user-context"
-import { MenuButton } from "@/components/menu-button"
-import { useState } from "react"
+import { AuthBoundary } from "@/components/auth-boundary"
+import { DashboardNavigation } from "@/components/dashboard-navigation"
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen)
-  }
-
   return (
-    <UserProvider>
-      <div className="min-h-screen">
-        <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-        <MenuButton onClick={toggleSidebar} />
-        <div className="p-6 md:p-10 pt-16">{children}</div>
+    <AuthBoundary requireAuth={true}>
+      <div className="min-h-screen bg-gray-50">
+        <DashboardNavigation />
+        <main className="container mx-auto px-4 py-8">
+          {children}
+        </main>
       </div>
-    </UserProvider>
+    </AuthBoundary>
   )
 }

@@ -33,6 +33,3 @@ export async function createClient() {
     }
   )
 }
-
-// Para compatibilidad con el código existente que usa supabaseServer
-export const supabaseServer = createClient()

@@ -9,6 +9,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  turbopack: {
+    // Add any Turbopack specific configurations here
+  },
 }
 
 export default nextConfig
